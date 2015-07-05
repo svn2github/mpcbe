@@ -1493,6 +1493,19 @@ HRESULT CMpcAudioRenderer::CheckAudioClient(WAVEFORMATEX *pWaveFormatEx/* = NULL
 			DbgLog((LOG_TRACE, 3, L"	=> ppClosestMatch:"));
 			DumpWaveFormatEx(sharedClosestMatch);
 #endif
+			if (sharedClosestMatch->wFormatTag == WAVE_FORMAT_IEEE_FLOAT && sharedClosestMatch->cbSize == 22) {
+				sharedClosestMatch->wFormatTag		= WAVE_FORMAT_EXTENSIBLE;
+				WAVEFORMATEXTENSIBLE* wfex			= (WAVEFORMATEXTENSIBLE*)sharedClosestMatch;
+				wfex->dwChannelMask					= GetDefChannelMask(sharedClosestMatch->nChannels);
+				wfex->SubFormat						= MEDIASUBTYPE_IEEE_FLOAT;
+				wfex->Samples.wValidBitsPerSample	= 32;
+
+				DbgLog((LOG_TRACE, 3, L"CMpcAudioRenderer::CheckAudioClient() - correct closest match format"));
+#if defined(_DEBUG) && DBGLOG_LEVEL > 0
+				DbgLog((LOG_TRACE, 3, L"	=> corrected ppClosestMatch:"));
+				DumpWaveFormatEx(sharedClosestMatch);
+#endif
+			}
 
 			CopyWaveFormat(sharedClosestMatch, &m_pWaveFileFormatOutput);
 			CoTaskMemFree(sharedClosestMatch);
