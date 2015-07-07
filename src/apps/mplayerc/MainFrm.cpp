@@ -30,7 +30,6 @@
 #include "../../DSUtil/WinAPIUtils.h"
 #include "../../DSUtil/SysVersion.h"
 #include "../../DSUtil/Filehandle.h"
-#include "../../DSUtil/Log.h"
 #include "../../DSUtil/FileVersionInfo.h"
 #include "OpenDlg.h"
 #include "SaveDlg.h"
@@ -5369,6 +5368,54 @@ void CMainFrame::DropFiles(CAtlList<CString>& slFiles)
 	OpenCurPlaylistItem();
 }
 
+static HRESULT CopyFiles(CString sourceFile, CString destFile)
+{
+	#define FOF_UI_FLAGS FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_NOCONFIRMMKDIR 
+
+	HRESULT hr = S_OK;
+
+	if (IsWinVistaOrLater()) {
+		CComPtr<IShellItem> psiItem;
+		hr = afxGlobalData.ShellCreateItemFromParsingName(sourceFile, NULL, IID_PPV_ARGS(&psiItem));
+		EXIT_ON_ERROR(hr);
+ 
+		CComPtr<IShellItem> psiDestinationFolder;
+		CString pszPath = AddSlash(GetFolderOnly(destFile));
+		hr = afxGlobalData.ShellCreateItemFromParsingName(pszPath, NULL, IID_PPV_ARGS(&psiDestinationFolder));
+		EXIT_ON_ERROR(hr);
+ 
+		CComPtr<IFileOperation> pFileOperation;
+		hr = CoCreateInstance(CLSID_FileOperation, 
+							  NULL, 
+							  CLSCTX_INPROC_SERVER, 
+							  IID_PPV_ARGS(&pFileOperation));
+		EXIT_ON_ERROR(hr);
+ 
+		hr = pFileOperation->SetOperationFlags(FOF_UI_FLAGS | FOFX_NOMINIMIZEBOX);
+		EXIT_ON_ERROR(hr);
+ 
+		CString pszCopyName = GetFileOnly(destFile);
+		hr = pFileOperation->CopyItem(psiItem, psiDestinationFolder, pszCopyName, NULL);
+		EXIT_ON_ERROR(hr);
+
+		hr = pFileOperation->PerformOperations();
+	} else {
+		sourceFile += '\0';
+		destFile += '\0';
+
+		SHFILEOPSTRUCT SHFileOp = { 0 };
+		SHFileOp.hwnd	= NULL;
+		SHFileOp.wFunc	= FO_COPY;
+		SHFileOp.pFrom	= sourceFile;
+		SHFileOp.pTo	= destFile;
+		SHFileOp.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_NOCONFIRMMKDIR;
+	
+		hr = (SHFileOperation(&SHFileOp) == 0) ? S_OK : E_FAIL;
+	}
+
+	return hr;
+}
+
 void CMainFrame::OnFileSaveAs()
 {
 	AppSettings& s = AfxGetAppSettings();
@@ -5433,12 +5480,22 @@ void CMainFrame::OnFileSaveAs()
 		name = GetAltFileName();
 	}
 
-	if (CTaskDialog::IsSupported()) {
-		CSaveTaskDlg dlg(in, name, p);
-		dlg.DoModal();
+	BOOL bUseSaveDlg = ::PathIsURL(in);
+	if (bUseSaveDlg && !m_YoutubeFile.IsEmpty()) {
+		bUseSaveDlg = m_fYoutubeThreadWork != TH_CLOSE && m_fYoutubeThreadWork != TH_ERROR;
+	}
+
+	if (bUseSaveDlg) {
+		if (CTaskDialog::IsSupported()) {
+			CSaveTaskDlg dlg(in, name, p);
+			dlg.DoModal();
+		} else {
+			CSaveDlg dlg(in, name, p);
+			dlg.DoModal();
+		}
 	} else {
-		CSaveDlg dlg(in, name, p);
-		dlg.DoModal();
+		CString sourceFile = m_YoutubeFile.IsEmpty() ? in : m_YoutubeFile;
+		CopyFiles(sourceFile, p);
 	}
 
 	if (fs == State_Running) {
@@ -11183,13 +11240,6 @@ HRESULT CMainFrame::PreviewWindowShow(REFERENCE_TIME rtCur2)
 		DVD_HMSF_TIMECODE dvdTo = RT2HMSF(rtCur2, fps);
 
 		if (FAILED(hr) || (Loc.TitleNum != Loc2.TitleNum)) {
-
-			if (FAILED(hr)) {
-				//LOG2FILE(_T("DVD - GetCurrentLocation() failed [%d : %d]"), Loc.TitleNum, Loc.ChapterNum);
-			} else {
-				//LOG2FILE(_T("DVD - TitleNum changed : Main :%d, Preview :%d"), Loc.TitleNum, Loc2.TitleNum);
-			}
-
 			hr = m_pDVDC_preview->PlayTitle(Loc.TitleNum, DVD_CMD_FLAG_Flush, NULL);
 			if (FAILED(hr)) {
 				return hr;
@@ -11218,7 +11268,6 @@ HRESULT CMainFrame::PreviewWindowShow(REFERENCE_TIME rtCur2)
 		}
 
 		m_pDVDI_preview->GetCurrentLocation(&Loc2);
-		//LOG2FILE(_T("DVD - Текущее воспроизведение : Main [%d : %d], Preview [%d : %d]"), Loc.TitleNum, Loc.ChapterNum, Loc2.TitleNum, Loc2.ChapterNum);
 
 		m_pDVDC_preview->Pause(FALSE);
 		m_pMC_preview->Run();
@@ -11256,9 +11305,6 @@ UINT CMainFrame::YoutubeThreadProc()
 	AppSettings& sApp = AfxGetAppSettings();
 	HINTERNET f, s = InternetOpen(L"MPC-BE", 0, NULL, NULL, 0);
 	if (s) {
-#ifdef _DEBUG
-		CString tmp = m_YoutubeFile;
-#endif
 		f = InternetOpenUrl(s, m_YoutubeFile, NULL, 0, INTERNET_FLAG_TRANSFER_BINARY | INTERNET_FLAG_EXISTING_CONNECT | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD, 0);
 		if (f) {
 			TCHAR QuerySizeText[100] = { 0 };
@@ -11318,13 +11364,6 @@ UINT CMainFrame::YoutubeThreadProc()
 					if (m_fYoutubeThreadWork == TH_START) {
 						m_fYoutubeThreadWork = TH_WORK;
 					}
-#ifdef _DEBUG
-					if (m_YoutubeCurrent) {
-						LOG2FILE(_T("Open Youtube, GOOD from \'%s\'"), tmp);
-					} else {
-						LOG2FILE(_T("Open Youtube, FAILED from \'%s\'"), tmp);
-					}
-#endif
 					CloseHandle(hFile);
 				} else {
 					m_fYoutubeThreadWork = TH_ERROR;
