@@ -659,33 +659,8 @@ BOOL CDX9RenderingEngine::InitializeDXVA2VP(int width, int height)
 	m_VideoDesc.OutputFrameFreq.Numerator           = VIDEO_FPS;
 	m_VideoDesc.OutputFrameFreq.Denominator         = 1;
 
-	// Query the video processor GUID.
-	UINT count;
-	GUID* guids = NULL;
-	hr = m_pDXVAVPS->GetVideoProcessorDeviceGuids(&m_VideoDesc, &count, &guids);
-	if (FAILED(hr)) {
-		TRACE("GetVideoProcessorDeviceGuids failed with error 0x%x.\n", hr);
-		return FALSE;
-	}
-
-	// move DXVA2_VideoProcProgressiveDevice to the beginning without changing the order of the remaining
-	for (UINT i = 0; i < count; i++) {
-		if (guids[i] == DXVA2_VideoProcProgressiveDevice) {
-			while (i--) {
-				guids[i+1] = guids[i];
-			}
-			guids[0] = DXVA2_VideoProcProgressiveDevice;
-			break;
-		}
-	}
-
-	// Create a DXVA2 device.
-	for (UINT i = 0; i < count; i++) {
-		if (CreateDXVA2VPDevice(guids[i])) {
-			break;
-		}
-	}
-	CoTaskMemFree(guids);
+	// Query DXVA2_VideoProcProgressiveDevice.
+	CreateDXVA2VPDevice(DXVA2_VideoProcProgressiveDevice);
 	if (!m_pDXVAVPD) {
 		TRACE("Failed to create a DXVA2 device.\n");
 		return FALSE;
