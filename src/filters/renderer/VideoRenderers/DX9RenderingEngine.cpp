@@ -145,7 +145,6 @@ CDX9RenderingEngine::CDX9RenderingEngine(HWND hWnd, HRESULT& hr, CString *_pErro
 	}
 
 #if DXVAVP
-	ZeroMemory(&m_GuidVP,    sizeof(m_GuidVP));
 	ZeroMemory(&m_VideoDesc, sizeof(m_VideoDesc));
 	ZeroMemory(&m_VPCaps,    sizeof(m_VPCaps));
 
@@ -780,8 +779,6 @@ BOOL CDX9RenderingEngine::CreateDXVA2VPDevice(REFGUID guid)
 		TRACE("CreateVideoProcessor failed with error 0x%x.\n", hr);
 		return FALSE;
 	}
-
-	m_GuidVP = guid;
 
 	return TRUE;
 }

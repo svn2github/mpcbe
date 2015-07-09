@@ -94,7 +94,6 @@ namespace DSObjects
 		CComPtr<IDirectXVideoProcessorService> m_pDXVAVPS;
 		CComPtr<IDirectXVideoProcessor> m_pDXVAVPD;
 
-		GUID                     m_GuidVP;
 		DXVA2_VideoDesc          m_VideoDesc;
 		DXVA2_VideoProcessorCaps m_VPCaps;
 
