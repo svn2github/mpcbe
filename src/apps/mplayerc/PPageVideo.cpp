@@ -409,6 +409,9 @@ void CPPageVideo::UpdateResizerList(int select)
 
 	m_cbDX9Resizer.SetItemData(m_cbDX9Resizer.AddString(L"Nearest neighbor"), RESIZER_NEAREST);
 	m_cbDX9Resizer.SetItemData(m_cbDX9Resizer.AddString(L"Bilinear"), RESIZER_BILINEAR);
+#if DXVAVP
+	m_cbDX9Resizer.SetItemData(m_cbDX9Resizer.AddString(L"DXVA2 (experimental)"), RESIZER_DXVA2);
+#endif
 
 	if (m_cbAPSurfaceUsage.GetCurSel() == VIDRNDT_AP_TEXTURE3D) {
 		m_cbDX9Resizer.SetItemData(m_cbDX9Resizer.AddString(L"Perlin Smootherstep (PS 2.0)"), RESIZER_SHADER_SMOOTHERSTEP);

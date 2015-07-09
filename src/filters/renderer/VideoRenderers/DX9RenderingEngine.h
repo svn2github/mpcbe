@@ -24,6 +24,7 @@
 #include "RenderersSettings.h"
 #include <d3d9.h>
 #include <dx/d3dx9.h>
+#include <dxva2api.h>
 #include "../SubPic/SubPicAllocatorPresenterImpl.h"
 
 enum {
@@ -88,6 +89,19 @@ namespace DSObjects
 		int							m_nCurSurface;					// Surface currently displayed
 		bool						m_bIsEVR;
 		DWORD						m_D3D9VendorId;
+
+#if DXVAVP
+		CComPtr<IDirectXVideoProcessorService> m_pDXVAVPS;
+		CComPtr<IDirectXVideoProcessor> m_pDXVAVPD;
+
+		GUID                     m_GuidVP;
+		DXVA2_VideoDesc          m_VideoDesc;
+		DXVA2_VideoProcessorCaps m_VPCaps;
+
+		DXVA2_Fixed32 m_ProcAmpValues[4];
+		DXVA2_Fixed32 m_NFilterValues[6];
+		DXVA2_Fixed32 m_DFilterValues[6];
+#endif
 
 		// Variables initialized/managed by this class but can be accessed by the allocator-presenter
 		bool						m_bD3DX;
@@ -179,6 +193,12 @@ namespace DSObjects
 		// Video rendering paths
 		HRESULT RenderVideoDrawPath(IDirect3DSurface9* pRenderTarget, const CRect& srcRect, const CRect& destRect);
 		HRESULT RenderVideoStretchRectPath(IDirect3DSurface9* pRenderTarget, const CRect& srcRect, const CRect& destRect);
+
+#if DXVAVP
+		BOOL InitializeDXVA2VP(int width, int height);
+		BOOL CreateDXVA2VPDevice(REFGUID guid);
+		HRESULT RenderVideoDXVA(IDirect3DSurface9* pRenderTarget, const CRect& srcRect, const CRect& destRect);
+#endif
 
 		// Custom pixel shaders
 		HRESULT InitVideoTextures(size_t count);
