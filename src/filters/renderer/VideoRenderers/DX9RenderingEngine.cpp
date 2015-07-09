@@ -134,6 +134,8 @@ CDX9RenderingEngine::CDX9RenderingEngine(HWND hWnd, HRESULT& hr, CString *_pErro
 	, m_CurrentAdapter(0)
 	, m_D3D9VendorId(0)
 	, m_VideoBufferType(D3DFMT_X8R8G8B8)
+	, m_SurfaceType(D3DFMT_X8R8G8B8)
+	, m_bColorManagement(false)
 {
 	HINSTANCE hDll = GetRenderersData()->GetD3X9Dll();
 	m_bD3DX = hDll != NULL;
@@ -335,7 +337,7 @@ HRESULT CDX9RenderingEngine::RenderVideoDrawPath(IDirect3DSurface9* pRenderTarge
 	HRESULT hr;
 
 	// Return if the video texture is not initialized
-	if (m_pVideoTexture[m_nCurSurface] == 0) {
+	if (m_pVideoTexture[m_nCurSurface] == NULL) {
 		return S_OK;
 	}
 
@@ -596,7 +598,7 @@ HRESULT CDX9RenderingEngine::RenderVideoStretchRectPath(IDirect3DSurface9* pRend
 	HRESULT hr;
 
 	// Return if the render target or the video surface is not initialized
-	if (pRenderTarget == 0 || m_pVideoSurface[m_nCurSurface] == 0) {
+	if (pRenderTarget == NULL || m_pVideoSurface[m_nCurSurface] == NULL) {
 		return S_OK;
 	}
 
