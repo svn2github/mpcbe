@@ -1912,30 +1912,6 @@ void CDX9AllocatorPresenter::DrawStats()
 			DrawText(rc, strText, 1);
 			OffsetRect(&rc, 0, TextHeight);
 
-			if (m_nDX9Resizer != DWORD_MAX) {
-				CString resizeStr;
-				switch (m_nDX9Resizer) {
-					case RESIZER_NEAREST:             resizeStr = L"Nearest neighbor"; break;
-					case RESIZER_BILINEAR:            resizeStr = L"Bilinear"; break;
-					case RESIZER_SHADER_SMOOTHERSTEP: resizeStr = L"Perlin Smootherstep"; break;
-					case RESIZER_SHADER_BICUBIC06:    resizeStr = L"Bicubic A=-0.6"; break;
-					case RESIZER_SHADER_BICUBIC08:    resizeStr = L"Bicubic A=-0.8"; break;
-					case RESIZER_SHADER_BICUBIC10:    resizeStr = L"Bicubic A=-1.0"; break;
-					case RESIZER_SHADER_BSPLINE4:     resizeStr = L"B-spline4"; break;
-					case RESIZER_SHADER_MITCHELL4:    resizeStr = L"Mitchell-Netravali spline4"; break;
-					case RESIZER_SHADER_CATMULL4:     resizeStr = L"Catmull-Rom spline4"; break;
-#if DXVAVP
-					case RESIZER_DXVA2:               resizeStr = L"DXVA2"; break;
-#endif
-				}
-
-				if (!resizeStr.IsEmpty()) {
-					strText.Format(L"Resizer      : %s", resizeStr);
-					DrawText(rc, strText, 1);
-					OffsetRect(&rc, 0, TextHeight);
-				}
-			}
-
 			if (m_bIsEVR) {
 				if (s.m_AdvRendSets.iVMR9VSync) {
 					strText.Format(L"Refresh rate : %.05f Hz    SL: %4d     (%3u Hz)      ", m_DetectedRefreshRate, int(m_DetectedScanlinesPerFrame + 0.5), m_refreshRate);
@@ -2052,7 +2028,24 @@ void CDX9AllocatorPresenter::DrawStats()
 		OffsetRect(&rc, 0, TextHeight);
 
 		if (bDetailedStats > 1) {
-			strText.Format(L"Video size   : %d x %d  (AR = %d : %d)", m_nativeVideoSize.cx, m_nativeVideoSize.cy, m_aspectRatio.cx, m_aspectRatio.cy);
+			strText.Format(L"Video size   : %d x %d (%d:%d)", m_nativeVideoSize.cx, m_nativeVideoSize.cy, m_aspectRatio.cx, m_aspectRatio.cy);
+			int videoW = m_videoRect.Width();
+			int videoH = m_videoRect.Height();
+			if (m_nativeVideoSize.cx != videoW || m_nativeVideoSize.cy != videoH) {
+				strText.AppendFormat(L" -> %d x %d ", videoW, videoH); // TODO: check modes without scaling but with cutting
+				switch (m_nDX9Resizer) {
+					case RESIZER_NEAREST:             strText.Append(L"Nearest neighbor"); break;
+					case RESIZER_BILINEAR:            strText.Append(L"Bilinear"); break;
+					case RESIZER_SHADER_SMOOTHERSTEP: strText.Append(L"Perlin Smootherstep"); break;
+					case RESIZER_SHADER_BICUBIC06:    strText.Append(L"Bicubic A=-0.6"); break;
+					case RESIZER_SHADER_BICUBIC08:    strText.Append(L"Bicubic A=-0.8"); break;
+					case RESIZER_SHADER_BICUBIC10:    strText.Append(L"Bicubic A=-1.0"); break;
+					case RESIZER_SHADER_BSPLINE4:     strText.Append(L"B-spline4"); break;
+					case RESIZER_SHADER_MITCHELL4:    strText.Append(L"Mitchell-Netravali spline4"); break;
+					case RESIZER_SHADER_CATMULL4:     strText.Append(L"Catmull-Rom spline4"); break;
+					case RESIZER_DXVA2:               strText.Append(L"DXVA2"); break;
+				}
+			}
 			DrawText(rc, strText, 1);
 			OffsetRect(&rc, 0, TextHeight);
 			if (m_pVideoTexture[0] || m_pVideoSurface[0]) {

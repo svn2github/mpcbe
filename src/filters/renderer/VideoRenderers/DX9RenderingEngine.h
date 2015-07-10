@@ -112,7 +112,7 @@ namespace DSObjects
 
 		bool						m_bColorManagement;
 		
-		DWORD						m_nDX9Resizer;
+		int							m_nDX9Resizer;
 
 		CDX9RenderingEngine(HWND hWnd, HRESULT& hr, CString *_pError);
 		~CDX9RenderingEngine();

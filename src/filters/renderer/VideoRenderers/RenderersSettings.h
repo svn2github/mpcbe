@@ -44,7 +44,8 @@ enum {
 	VIDRNDT_AP_TEXTURE3D,
 };
 
-enum {
+enum :int {
+	RESIZER_UNKNOWN = -1,
 	RESIZER_NEAREST = 0,
 	RESIZER_BILINEAR,
 	RESIZER_SHADER_BILINEAR, // do not use more

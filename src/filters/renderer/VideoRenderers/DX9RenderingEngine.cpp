@@ -126,8 +126,9 @@ static HRESULT TextureBlt(IDirect3DDevice9* pD3DDev, MYD3DVERTEX<texcoords> v[4]
 
 using namespace DSObjects;
 
-#define vendorNvidia 0x10DE
-#define vendorIntel  0x8086
+#define PCIV_ATI     0x1002
+#define PCIV_nVidia  0x10DE
+#define PCIV_Intel   0x8086
 
 CDX9RenderingEngine::CDX9RenderingEngine(HWND hWnd, HRESULT& hr, CString *_pError)
 	: CSubPicAllocatorPresenterImpl(hWnd, hr, _pError)
@@ -139,7 +140,7 @@ CDX9RenderingEngine::CDX9RenderingEngine(HWND hWnd, HRESULT& hr, CString *_pErro
 	, m_VideoBufferType(D3DFMT_X8R8G8B8)
 	, m_SurfaceType(D3DFMT_X8R8G8B8)
 	, m_bColorManagement(false)
-	, m_nDX9Resizer(DWORD_MAX)
+	, m_nDX9Resizer(RESIZER_UNKNOWN)
 {
 	HINSTANCE hDll = GetRenderersData()->GetD3X9Dll();
 	m_bD3DX = hDll != NULL;
@@ -280,7 +281,7 @@ HRESULT CDX9RenderingEngine::CreateVideoSurfaces()
 	}
 	else if (settings.iAPSurfaceUsage == VIDRNDT_AP_TEXTURE3D) {
 		m_VideoBufferType = m_SurfaceType;
-		if (m_D3D9VendorId == vendorIntel) {
+		if (m_D3D9VendorId == PCIV_Intel) {
 			if (m_bIsEVR) {
 				m_VideoBufferType = D3DFMT_X8R8G8B8;
 			} else if (m_SurfaceType == D3DFMT_A32B32G32R32F && settings.fVMRMixerMode && settings.fVMRMixerYUV) {
@@ -333,7 +334,7 @@ HRESULT CDX9RenderingEngine::RenderVideo(IDirect3DSurface9* pRenderTarget, const
 		return S_OK;
 	}
 
-	m_nDX9Resizer = DWORD_MAX;
+	m_nDX9Resizer = RESIZER_UNKNOWN;
 
 #if DXVAVP
 	if (GetRenderersSettings().iDX9Resizer == RESIZER_DXVA2) {
@@ -813,11 +814,11 @@ HRESULT CDX9RenderingEngine::RenderVideoDXVA(IDirect3DSurface9* pRenderTarget, c
 		return S_OK;
 	}
 
-	m_nDX9Resizer = RESIZER_DXVA2;
-
 	if (!m_pDXVAVPD && !InitializeDXVA2VP(srcRect.Width(), srcRect.Height())) {
 		return E_FAIL;
 	}
+
+	m_nDX9Resizer = RESIZER_DXVA2;
 
 	DXVA2_VideoProcessBltParams blt = {0};
 	DXVA2_VideoSample samples[1] = {0};
@@ -902,7 +903,7 @@ HRESULT CDX9RenderingEngine::RenderVideoDXVA(IDirect3DSurface9* pRenderTarget, c
 	samples[0].PlanarAlpha = DXVA2_Fixed32OpaqueAlpha();
 
 	// clear pRenderTarget, need for Nvidia graphics cards
-	if (m_D3D9VendorId == vendorNvidia) {
+	if (m_D3D9VendorId == PCIV_nVidia) {
 		CRect clientRect;
 		if (rDstRect.left > 0 || rDstRect.top > 0 ||
 				GetClientRect(m_hWnd, clientRect) && (rDstRect.right < clientRect.Width() || rDstRect.bottom < clientRect.Height())) {
