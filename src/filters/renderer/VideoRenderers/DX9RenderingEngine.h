@@ -113,6 +113,7 @@ namespace DSObjects
 		bool						m_bColorManagement;
 
 		CDX9RenderingEngine(HWND hWnd, HRESULT& hr, CString *_pError);
+		~CDX9RenderingEngine();
 
 		void InitRenderingEngine();
 		void CleanupRenderingEngine();
@@ -194,6 +195,7 @@ namespace DSObjects
 		HRESULT RenderVideoStretchRectPath(IDirect3DSurface9* pRenderTarget, const CRect& srcRect, const CRect& destRect);
 
 #if DXVAVP
+		HMODULE m_hDxva2Lib = NULL;
 		BOOL InitializeDXVA2VP(int width, int height);
 		BOOL CreateDXVA2VPDevice(REFGUID guid);
 		HRESULT RenderVideoDXVA(IDirect3DSurface9* pRenderTarget, const CRect& srcRect, const CRect& destRect);
