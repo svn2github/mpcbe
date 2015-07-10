@@ -633,14 +633,6 @@ const UINT VIDEO_FPS     = 60;
 const UINT VIDEO_MSPF    = (1000 + VIDEO_FPS / 2) / VIDEO_FPS;
 const UINT VIDEO_100NSPF = VIDEO_MSPF * 10000;
 
-//
-// Helper inline functions.
-//
-inline BOOL operator != (const DXVA2_ValueRange& x, const DXVA2_ValueRange& y)
-{
-	return memcmp(&x, &y, sizeof(x)) ? TRUE : FALSE;
-}
-
 BOOL CDX9RenderingEngine::InitializeDXVA2VP(int width, int height)
 {
 	if (!m_hDxva2Lib) {
