@@ -25,6 +25,8 @@
 #include "Dither.h"
 #include "DX9RenderingEngine.h"
 
+#pragma comment(lib, "dxva2.lib")
+
 #define NULL_PTR_ARRAY(a) for (size_t i = 0; i < _countof(a); i++) { a[i] = NULL; }
 
 #pragma pack(push, 1)
