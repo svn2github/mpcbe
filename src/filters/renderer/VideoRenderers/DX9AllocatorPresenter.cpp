@@ -2043,7 +2043,9 @@ void CDX9AllocatorPresenter::DrawStats()
 					case RESIZER_SHADER_BSPLINE4:     strText.Append(L"B-spline4"); break;
 					case RESIZER_SHADER_MITCHELL4:    strText.Append(L"Mitchell-Netravali spline4"); break;
 					case RESIZER_SHADER_CATMULL4:     strText.Append(L"Catmull-Rom spline4"); break;
+#if DXVAVP
 					case RESIZER_DXVA2:               strText.Append(L"DXVA2"); break;
+#endif
 				}
 			}
 			DrawText(rc, strText, 1);

@@ -338,7 +338,9 @@ HRESULT CDX9RenderingEngine::RenderVideo(IDirect3DSurface9* pRenderTarget, const
 
 #if DXVAVP
 	if (GetRenderersSettings().iDX9Resizer == RESIZER_DXVA2) {
-		return RenderVideoDXVA(pRenderTarget, srcRect, destRect);
+		if (S_OK == RenderVideoDXVA(pRenderTarget, srcRect, destRect)) {
+			return S_OK;
+		}
 	}
 #endif
 
@@ -916,7 +918,7 @@ HRESULT CDX9RenderingEngine::RenderVideoDXVA(IDirect3DSurface9* pRenderTarget, c
 		TRACE("VideoProcessBlt failed with error 0x%x.\n", hr);
 	}
 
-	return TRUE;
+	return S_OK;
 }
 #endif
 
