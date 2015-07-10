@@ -126,6 +126,9 @@ static HRESULT TextureBlt(IDirect3DDevice9* pD3DDev, MYD3DVERTEX<texcoords> v[4]
 
 using namespace DSObjects;
 
+#define vendorNvidia 0x10DE
+#define vendorIntel  0x8086
+
 CDX9RenderingEngine::CDX9RenderingEngine(HWND hWnd, HRESULT& hr, CString *_pError)
 	: CSubPicAllocatorPresenterImpl(hWnd, hr, _pError)
 	, m_ScreenSize(0, 0)
@@ -136,6 +139,7 @@ CDX9RenderingEngine::CDX9RenderingEngine(HWND hWnd, HRESULT& hr, CString *_pErro
 	, m_VideoBufferType(D3DFMT_X8R8G8B8)
 	, m_SurfaceType(D3DFMT_X8R8G8B8)
 	, m_bColorManagement(false)
+	, m_nDX9Resizer(DWORD_MAX)
 {
 	HINSTANCE hDll = GetRenderersData()->GetD3X9Dll();
 	m_bD3DX = hDll != NULL;
@@ -276,7 +280,7 @@ HRESULT CDX9RenderingEngine::CreateVideoSurfaces()
 	}
 	else if (settings.iAPSurfaceUsage == VIDRNDT_AP_TEXTURE3D) {
 		m_VideoBufferType = m_SurfaceType;
-		if (m_D3D9VendorId == 0x8086) {
+		if (m_D3D9VendorId == vendorIntel) {
 			if (m_bIsEVR) {
 				m_VideoBufferType = D3DFMT_X8R8G8B8;
 			} else if (m_SurfaceType == D3DFMT_A32B32G32R32F && settings.fVMRMixerMode && settings.fVMRMixerYUV) {
@@ -328,6 +332,8 @@ HRESULT CDX9RenderingEngine::RenderVideo(IDirect3DSurface9* pRenderTarget, const
 	if (destRect.IsRectEmpty()) {
 		return S_OK;
 	}
+
+	m_nDX9Resizer = DWORD_MAX;
 
 #if DXVAVP
 	if (GetRenderersSettings().iDX9Resizer == RESIZER_DXVA2) {
@@ -404,6 +410,8 @@ HRESULT CDX9RenderingEngine::RenderVideoDrawPath(IDirect3DSurface9* pRenderTarge
 		if (FAILED(hr)) {
 			iDX9Resizer = RESIZER_BILINEAR;
 		}
+
+		m_nDX9Resizer = iDX9Resizer;
 
 		screenSpacePassCount++; // currently all resizers are 1-pass
 #if ENABLE_2PASS_RESIZE
@@ -614,6 +622,8 @@ HRESULT CDX9RenderingEngine::RenderVideoStretchRectPath(IDirect3DSurface9* pRend
 
 	D3DTEXTUREFILTERTYPE filter = GetRenderersSettings().iDX9Resizer == RESIZER_NEAREST ? D3DTEXF_POINT : D3DTEXF_LINEAR;
 
+	m_nDX9Resizer = (filter == D3DTEXF_POINT) ? RESIZER_NEAREST : RESIZER_BILINEAR;
+
 	CRect rSrcVid(srcRect);
 	CRect rDstVid(destRect);
 
@@ -803,6 +813,8 @@ HRESULT CDX9RenderingEngine::RenderVideoDXVA(IDirect3DSurface9* pRenderTarget, c
 		return S_OK;
 	}
 
+	m_nDX9Resizer = RESIZER_DXVA2;
+
 	if (!m_pDXVAVPD && !InitializeDXVA2VP(srcRect.Width(), srcRect.Height())) {
 		return E_FAIL;
 	}
@@ -890,10 +902,12 @@ HRESULT CDX9RenderingEngine::RenderVideoDXVA(IDirect3DSurface9* pRenderTarget, c
 	samples[0].PlanarAlpha = DXVA2_Fixed32OpaqueAlpha();
 
 	// clear pRenderTarget, need for Nvidia graphics cards
-	CRect clientRect;
-	if (rDstRect.left > 0 || rDstRect.top > 0 ||
-			GetClientRect(m_hWnd, clientRect) && (rDstRect.right < clientRect.Width() || rDstRect.bottom < clientRect.Height())) {
-		m_pD3DDev->ColorFill(pRenderTarget, NULL, 0);
+	if (m_D3D9VendorId == vendorNvidia) {
+		CRect clientRect;
+		if (rDstRect.left > 0 || rDstRect.top > 0 ||
+				GetClientRect(m_hWnd, clientRect) && (rDstRect.right < clientRect.Width() || rDstRect.bottom < clientRect.Height())) {
+			m_pD3DDev->ColorFill(pRenderTarget, NULL, 0);
+		}
 	}
 
 	hr = m_pDXVAVPD->VideoProcessBlt(pRenderTarget, &blt, samples, 1, NULL);
