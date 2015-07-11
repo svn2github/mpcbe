@@ -2036,6 +2036,9 @@ void CDX9AllocatorPresenter::DrawStats()
 				switch (m_nDX9Resizer) {
 					case RESIZER_NEAREST:             strText.Append(L"Nearest neighbor"); break;
 					case RESIZER_BILINEAR:            strText.Append(L"Bilinear"); break;
+#if DXVAVP
+					case RESIZER_DXVA2:               strText.Append(L"DXVA2"); break;
+#endif
 					case RESIZER_SHADER_SMOOTHERSTEP: strText.Append(L"Perlin Smootherstep"); break;
 					case RESIZER_SHADER_BICUBIC06:    strText.Append(L"Bicubic A=-0.6"); break;
 					case RESIZER_SHADER_BICUBIC08:    strText.Append(L"Bicubic A=-0.8"); break;
@@ -2043,9 +2046,7 @@ void CDX9AllocatorPresenter::DrawStats()
 					case RESIZER_SHADER_BSPLINE4:     strText.Append(L"B-spline4"); break;
 					case RESIZER_SHADER_MITCHELL4:    strText.Append(L"Mitchell-Netravali spline4"); break;
 					case RESIZER_SHADER_CATMULL4:     strText.Append(L"Catmull-Rom spline4"); break;
-#if DXVAVP
-					case RESIZER_DXVA2:               strText.Append(L"DXVA2"); break;
-#endif
+					case RESIZER_SHADER_AVERAGE:      strText.Append(L"Simple averaging"); break;
 				}
 			}
 			DrawText(rc, strText, 1);

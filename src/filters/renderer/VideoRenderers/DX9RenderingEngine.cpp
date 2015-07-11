@@ -1190,6 +1190,7 @@ HRESULT CDX9RenderingEngine::TextureResizeShader(IDirect3DTexture9* pTexture, Ve
 	hr = m_pD3DDev->SetTexture(0, pTexture);
 
 	if (m_pResizerPixelShaders[shader_downscaling] && rx > 2.0f && ry > 2.0f) {
+		m_nDX9Resizer = RESIZER_SHADER_AVERAGE;
 		float fConstData[][4] = {{dx, dy, 0, 0}, {rx, 0, 0, 0}, {ry, 0, 0, 0}};
 		hr = m_pD3DDev->SetPixelShaderConstantF(0, (float*)fConstData, _countof(fConstData));
 		hr = m_pD3DDev->SetPixelShader(m_pResizerPixelShaders[shader_downscaling]);
