@@ -229,8 +229,8 @@ BOOL CMpegSplitterFile::CheckKeyFrame(CAtlArray<BYTE>& pData, stream_codec codec
 		Nalu.SetBuffer(pData.GetData(), pData.GetCount());
 		while (Nalu.ReadNext()) {
 			NALU_TYPE nalu_type = Nalu.GetType();
-			if (nalu_type == NALU_TYPE_IDR || nalu_type == NALU_TYPE_SEI) {
-				// IDR/SEI Nalu
+			if (nalu_type == NALU_TYPE_IDR) {
+				// IDR Nalu
 				return TRUE;
 			}
 		}
