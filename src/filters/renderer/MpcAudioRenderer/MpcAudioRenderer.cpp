@@ -244,7 +244,7 @@ CMpcAudioRenderer::CMpcAudioRenderer(LPUNKNOWN punk, HRESULT *phr)
 	HRESULT hr = S_OK;
 	// CBaseRenderer is using a lazy initialization for the CRendererPosPassThru - we need it always
 	CBasePin *pPin = GetPin(0);
-	m_pPosition = new CRendererPosPassThru(NAME("CRendererPosPassThru"), CBaseFilter::GetOwner(), &hr, pPin);
+	m_pPosition = DNew CRendererPosPassThru(NAME("CRendererPosPassThru"), CBaseFilter::GetOwner(), &hr, pPin);
 	if (m_pPosition == NULL) {
 		hr = E_OUTOFMEMORY;
 	} else if (FAILED(hr)) {
@@ -1424,11 +1424,13 @@ HRESULT CMpcAudioRenderer::CheckAudioClient(WAVEFORMATEX *pWaveFormatEx/* = NULL
 				}
 
 				if (!pFormat && bInitNeed) {
-					m_pMMDevice->OpenPropertyStore(STGM_READ, &pProps);
-					PropVariantInit(&varConfig);
-					hr = pProps->GetValue(PKEY_AudioEngine_DeviceFormat, &varConfig);
-					if (SUCCEEDED(hr) && varConfig.vt == VT_BLOB && varConfig.blob.pBlobData != NULL) {
-						pFormat = (WAVEFORMATEX*)varConfig.blob.pBlobData;
+					hr = m_pMMDevice->OpenPropertyStore(STGM_READ, &pProps);
+					if (SUCCEEDED(hr)) {
+						PropVariantInit(&varConfig);
+						hr = pProps->GetValue(PKEY_AudioEngine_DeviceFormat, &varConfig);
+						if (SUCCEEDED(hr) && varConfig.vt == VT_BLOB && varConfig.blob.pBlobData != NULL) {
+							pFormat = (WAVEFORMATEX*)varConfig.blob.pBlobData;
+						}
 					}
 				}
 			}
@@ -1525,55 +1527,53 @@ HRESULT CMpcAudioRenderer::GetAudioDevice()
 		return hr;
 	}
 
-	if (hr == S_OK && devices) {
-		IPropertyStore* pProps = NULL;
+	IPropertyStore* pProps = NULL;
 
-		for (UINT i = 0 ; i < count ; i++) {
-			LPWSTR pwszID = NULL;
-			IMMDevice *endpoint = NULL;
-			hr = devices->Item(i, &endpoint);
+	for (UINT i = 0 ; i < count ; i++) {
+		LPWSTR pwszID = NULL;
+		IMMDevice *endpoint = NULL;
+		hr = devices->Item(i, &endpoint);
+		if (hr == S_OK) {
+			hr = endpoint->GetId(&pwszID);
 			if (hr == S_OK) {
-				hr = endpoint->GetId(&pwszID);
-				if (hr == S_OK) {
-					if (endpoint->OpenPropertyStore(STGM_READ, &pProps) == S_OK) {
-						PROPVARIANT varName;
-						PropVariantInit(&varName);
+				if (endpoint->OpenPropertyStore(STGM_READ, &pProps) == S_OK) {
+					PROPVARIANT varName;
+					PropVariantInit(&varName);
 
-						// Found the configured audio endpoint
-						if ((pProps->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK) && (m_DeviceName == varName.pwszVal)) {
-							DbgLog((LOG_TRACE, 3, L"CMpcAudioRenderer::GetAudioDevice() - devices->GetId() OK, num: (%d), pwszVal: '%s', pwszID: '%s'", i, varName.pwszVal, pwszID));
+					// Found the configured audio endpoint
+					if ((pProps->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK) && (m_DeviceName == varName.pwszVal)) {
+						DbgLog((LOG_TRACE, 3, L"CMpcAudioRenderer::GetAudioDevice() - devices->GetId() OK, num: (%d), pwszVal: '%s', pwszID: '%s'", i, varName.pwszVal, pwszID));
 
-							m_strDeviceName = varName.pwszVal;
-							if (m_strDeviceId.IsEmpty()) {
-								m_strDeviceId = pwszID;
-							}
-
-							enumerator->GetDevice(pwszID, &m_pMMDevice);
-							SAFE_RELEASE(devices);
-							m_pMMDevice = endpoint;
-							CoTaskMemFree(pwszID);
-							pwszID = NULL;
-							PropVariantClear(&varName);
-							SAFE_RELEASE(pProps);
-							return S_OK;
-						} else {
-							PropVariantClear(&varName);
-							SAFE_RELEASE(pProps);
-							SAFE_RELEASE(endpoint);
-							CoTaskMemFree(pwszID);
-							pwszID = NULL;
+						m_strDeviceName = varName.pwszVal;
+						if (m_strDeviceId.IsEmpty()) {
+							m_strDeviceId = pwszID;
 						}
+
+						enumerator->GetDevice(pwszID, &m_pMMDevice);
+						SAFE_RELEASE(devices);
+						m_pMMDevice = endpoint;
+						CoTaskMemFree(pwszID);
+						pwszID = NULL;
+						PropVariantClear(&varName);
+						SAFE_RELEASE(pProps);
+						return S_OK;
+					} else {
+						PropVariantClear(&varName);
+						SAFE_RELEASE(pProps);
+						SAFE_RELEASE(endpoint);
+						CoTaskMemFree(pwszID);
+						pwszID = NULL;
 					}
-				} else {
-					DbgLog((LOG_TRACE, 3, L"CMpcAudioRenderer::GetAudioDevice() - devices->GetId() failed: (0x%08x)", hr));
 				}
 			} else {
-				DbgLog((LOG_TRACE, 3, L"CMpcAudioRenderer::GetAudioDevice() - devices->Item() failed: (0x%08x)", hr));
+				DbgLog((LOG_TRACE, 3, L"CMpcAudioRenderer::GetAudioDevice() - devices->GetId() failed: (0x%08x)", hr));
 			}
-
-			CoTaskMemFree(pwszID);
-			pwszID = NULL;
+		} else {
+			DbgLog((LOG_TRACE, 3, L"CMpcAudioRenderer::GetAudioDevice() - devices->Item() failed: (0x%08x)", hr));
 		}
+
+		CoTaskMemFree(pwszID);
+		pwszID = NULL;
 	}
 
 	SAFE_RELEASE(devices);
