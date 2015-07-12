@@ -261,7 +261,7 @@ BOOL CMpegSplitterFile::CheckKeyFrame(CAtlArray<BYTE>& pData, stream_codec codec
 	return TRUE;
 }
 
-REFERENCE_TIME CMpegSplitterFile::NextPTS(DWORD TrackNum, stream_codec codec, __int64& nextPos, BOOL bKeyFrameOnly/* = FALSE*/)
+REFERENCE_TIME CMpegSplitterFile::NextPTS(DWORD TrackNum, stream_codec codec, __int64& nextPos, BOOL bKeyFrameOnly/* = FALSE*/, REFERENCE_TIME rtLimit/* = _I64_MAX*/)
 {
 	REFERENCE_TIME rt	= INVALID_TIME;
 	__int64 rtpos		= -1;
@@ -289,6 +289,11 @@ REFERENCE_TIME CMpegSplitterFile::NextPTS(DWORD TrackNum, stream_codec codec, __
 				nextPos = pos3 + h.len;
 
 				if (h.fpts && AddStream(0, b, h.id_ext, h.len, FALSE) == TrackNum) {
+					if (rtLimit != _I64_MAX && (h.pts - m_rtMin) > rtLimit) {
+						Seek(pos);
+						return INVALID_TIME;
+					}
+
 					rt		= h.pts;
 					rtpos	= pos2;
 
@@ -326,6 +331,11 @@ REFERENCE_TIME CMpegSplitterFile::NextPTS(DWORD TrackNum, stream_codec codec, __
 				if (NextMpegStartCode(b, 4)) {
 					peshdr h2;
 					if (Read(h2, b) && h2.fpts) { // pes packet
+						if (rtLimit != _I64_MAX && (h2.pts - m_rtMin) > rtLimit) {
+							Seek(pos);
+							return INVALID_TIME;
+						}
+
 						rt		= h2.pts;
 						rtpos	= pos2;
 

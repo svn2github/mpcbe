@@ -1240,7 +1240,7 @@ void CMpegSplitterFilter::DemuxSeek(REFERENCE_TIME rt)
 								REFERENCE_TIME rtLimit = CMpegSplitterFile::stream_codec::MPEG ? rt : rtmax;
 								while (m_pFile->GetRemaining()) {
 									m_pFile->Seek(nextPos);
-									rtPTS = m_pFile->NextPTS(TrackNum, stream.codec, nextPos, TRUE);
+									rtPTS = m_pFile->NextPTS(TrackNum, stream.codec, nextPos, TRUE, rtLimit);
 									if (rtPTS > rtLimit || rtPTS == INVALID_TIME) {
 										break;
 									}
