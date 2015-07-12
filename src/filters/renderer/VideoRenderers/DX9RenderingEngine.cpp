@@ -904,13 +904,11 @@ HRESULT CDX9RenderingEngine::RenderVideoDXVA(IDirect3DSurface9* pRenderTarget, c
 	// DXVA2_VideoProcess_PlanarAlpha
 	samples[0].PlanarAlpha = DXVA2_Fixed32OpaqueAlpha();
 
-	// clear pRenderTarget, need for Nvidia graphics cards
-	if (m_D3D9VendorId == PCIV_nVidia) {
-		CRect clientRect;
-		if (rDstRect.left > 0 || rDstRect.top > 0 ||
-				GetClientRect(m_hWnd, clientRect) && (rDstRect.right < clientRect.Width() || rDstRect.bottom < clientRect.Height())) {
-			m_pD3DDev->ColorFill(pRenderTarget, NULL, 0);
-		}
+	// clear pRenderTarget, need for Nvidia graphics cards and Intel mobile graphics
+	CRect clientRect;
+	if (rDstRect.left > 0 || rDstRect.top > 0 ||
+			GetClientRect(m_hWnd, clientRect) && (rDstRect.right < clientRect.Width() || rDstRect.bottom < clientRect.Height())) {
+		m_pD3DDev->ColorFill(pRenderTarget, NULL, 0);
 	}
 
 	hr = m_pDXVAVPD->VideoProcessBlt(pRenderTarget, &blt, samples, 1, NULL);
