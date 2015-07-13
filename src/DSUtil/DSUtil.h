@@ -44,8 +44,8 @@
 #define LCID_NOSUBTITLES	-1
 #define INVALID_TIME		_I64_MIN
 
-#define KILOBYTE			1024
-#define MEGABYTE			KILOBYTE * KILOBYTE
+#define KILOBYTE		1024
+#define MEGABYTE		1048576
 
 #define GETWORD(b)		*(WORD*)(b)
 #define GETDWORD(b)		*(DWORD*)(b)
