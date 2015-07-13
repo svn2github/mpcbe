@@ -661,7 +661,7 @@ DWORD CMpegSplitterFile::AddStream(WORD pid, BYTE pesid, BYTE ps1id, DWORD len, 
 				|| (pesid >= 0xe0 && pesid < 0xf0)
 				|| pesid == 0xfe)) { // mpeg video/audio
 		// MPEG2
-		if (type == stream_type::unknown && (stream_type & MPEG2_VIDEO)) {
+		if (stream_type & MPEG2_VIDEO) {
 			// Sequence/extension header can be split into multiple packets
 			if (!m_streams[stream_type::video].Find(s)) {
 				if (!seqh.Lookup(s)) {

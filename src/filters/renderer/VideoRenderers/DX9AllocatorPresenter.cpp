@@ -1907,7 +1907,7 @@ void CDX9AllocatorPresenter::DrawStats()
 
 			strText.Format(L"Formats      : VideoBuffer %s, Surface %s, Backbuffer %s, Display %s. Device %s", GetD3DFormatStr(m_VideoBufferType), GetD3DFormatStr(m_SurfaceType), GetD3DFormatStr(m_BackbufferType), GetD3DFormatStr(m_DisplayType), m_pD3DDevEx ? L"D3DDevEx" : L"D3DDev");
 			if (m_D3DDevExError.GetLength()) {
-				strText.AppendFormat(L". D3DExError: %s", m_D3DDevExError.GetString());
+				strText.AppendFormat(L". D3DExError: %s", m_D3DDevExError);
 			}
 			DrawText(rc, strText, 1);
 			OffsetRect(&rc, 0, TextHeight);
